@@ -76,9 +76,14 @@ router.get("/verify/repost", async (req, res) => {
   const tweetId = process.env.PINNED_TWEET_ID;
   if (!tweetId) return res.status(400).json({ message: "PINNED_TWEET_ID not set" });
   try {
-    const tweetsPaginator = await client.v2.userTimeline(user.twitterId, { max_results: 100, "tweet.fields": ["referenced_tweets"] });
-    const reposted = tweetsPaginator.tweets.some((t: any) =>
-      t.referenced_tweets?.some((rt: any) => rt.type === "retweeted" && rt.id === tweetId)
+    // Use v1 timeline with include_rts=true — v2 excludes retweets by default
+    const timeline = await client.v1.get("statuses/user_timeline.json", {
+      user_id: user.twitterId,
+      count: 200,
+      include_rts: true,
+    });
+    const reposted = Array.isArray(timeline) && timeline.some((t: any) =>
+      t.retweeted_status?.id_str === tweetId
     );
     res.json({ reposted });
   } catch (err: any) {
