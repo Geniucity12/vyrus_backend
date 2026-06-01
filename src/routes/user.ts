@@ -86,6 +86,20 @@ router.get("/verify/repost", async (req, res) => {
   }
 });
 
+// Check if a wallet is on the allowlist (has completed tasks)
+router.get("/check-role", async (req, res) => {
+  const { wallet } = req.query;
+  if (!wallet || typeof wallet !== "string") {
+    return res.status(400).json({ message: "Wallet address required" });
+  }
+  try {
+    const user = await prisma.user.findFirst({ where: { wallet } });
+    res.json({ isAllowlisted: !!user, wallet });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to check role" });
+  }
+});
+
 // Get current user info
 router.get("/me", async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Not authenticated" });
