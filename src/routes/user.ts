@@ -11,11 +11,17 @@ router.get("/verify/follow", async (req, res) => {
   const client = getTwitterClient(user.twitterToken, user.twitterTokenSecret);
   const targetScreenName = process.env.TARGET_TWITTER_USERNAME || "VyrusNfts";
   try {
-    const friendship = await client.v1.friendship({ source_id: user.twitterId, target_screen_name: targetScreenName });
-    const isFollowing = friendship.relationship.source.following;
+    // Look up target user ID by username
+    const targetResult = await client.v2.userByUsername(targetScreenName);
+    const targetId = targetResult.data?.id;
+    if (!targetId) return res.status(400).json({ message: "Target account not found", target: targetScreenName });
+
+    // Check authenticated user's following list (up to 1000)
+    const followingResult = await client.v2.following(user.twitterId, { max_results: 1000 });
+    const isFollowing = followingResult.data?.some((u: any) => u.id === targetId) ?? false;
     res.json({ following: isFollowing });
   } catch (err: any) {
-    res.status(500).json({ message: "Failed to verify follow", error: err.message });
+    res.status(500).json({ message: "Failed to verify follow", error: err.message, data: err.data });
   }
 });
 
