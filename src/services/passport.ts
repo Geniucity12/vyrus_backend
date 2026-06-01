@@ -5,11 +5,11 @@ import { Strategy as TwitterStrategy } from "passport-twitter";
 
 import prisma from "../db";
 
-passport.serializeUser((user: any, done) => {
+passport.serializeUser((user: any, done: (err: any, id?: string) => void) => {
   done(null, user.id);
 });
 
-passport.deserializeUser(async (id: string, done) => {
+passport.deserializeUser(async (id: string, done: (err: any, user?: any) => void) => {
   try {
     const user = await prisma.user.findUnique({ where: { id } });
     done(null, user);
