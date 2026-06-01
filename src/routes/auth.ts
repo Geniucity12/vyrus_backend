@@ -14,8 +14,10 @@ router.get(
     session: true,
   }),
   (req, res) => {
-    // On success, redirect to frontend with user info
-    res.redirect(`${process.env.CLIENT_URL}/?auth=success`);
+    // On success, redirect to frontend — include username in URL as fallback for cross-domain cookie issues
+    const u = req.user as any;
+    const username = encodeURIComponent(u?.username || "");
+    res.redirect(`${process.env.CLIENT_URL}/?auth=success&username=${username}`);
   }
 );
 
