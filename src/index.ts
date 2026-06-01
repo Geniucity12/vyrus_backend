@@ -27,6 +27,7 @@ if (isProduction) {
 app.use(cors({
   origin: clientUrl,
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express.json());
 
