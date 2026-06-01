@@ -17,7 +17,7 @@ dotenv.config({ path: ".env" });
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isProduction = process.env.NODE_ENV === "production" || !!process.env.RAILWAY_ENVIRONMENT;
-const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
 
 // Required behind reverse proxies (Render/Heroku/etc.) so secure cookies work.
 if (isProduction) {
