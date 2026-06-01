@@ -68,6 +68,24 @@ router.get("/verify/tag", async (req, res) => {
 });
 
 
+// Verify if user reposted (retweeted) the pinned tweet
+router.get("/verify/repost", async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Not authenticated" });
+  const user = req.user as any;
+  const client = getTwitterClient(user.twitterToken, user.twitterTokenSecret);
+  const tweetId = process.env.PINNED_TWEET_ID;
+  if (!tweetId) return res.status(400).json({ message: "PINNED_TWEET_ID not set" });
+  try {
+    const tweetsPaginator = await client.v2.userTimeline(user.twitterId, { max_results: 100, "tweet.fields": ["referenced_tweets"] });
+    const reposted = tweetsPaginator.tweets.some((t: any) =>
+      t.referenced_tweets?.some((rt: any) => rt.type === "retweeted" && rt.id === tweetId)
+    );
+    res.json({ reposted });
+  } catch (err: any) {
+    res.status(500).json({ message: "Failed to verify repost", error: err.message });
+  }
+});
+
 // Get current user info
 router.get("/me", async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Not authenticated" });
