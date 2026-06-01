@@ -1,5 +1,6 @@
 import express from "express";
 import passport from "passport";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -14,10 +15,15 @@ router.get(
     session: true,
   }),
   (req, res) => {
-    // On success, redirect to frontend — include username in URL as fallback for cross-domain cookie issues
     const u = req.user as any;
     const username = encodeURIComponent(u?.username || "");
-    res.redirect(`${process.env.CLIENT_URL}/?auth=success&username=${username}`);
+    // Generate JWT so frontend can auth cross-domain without relying on cookies
+    const token = jwt.sign(
+      { userId: u?.id },
+      process.env.SESSION_SECRET || "secret",
+      { expiresIn: "30d" }
+    );
+    res.redirect(`${process.env.CLIENT_URL}/?auth=success&username=${username}&token=${token}`);
   }
 );
 

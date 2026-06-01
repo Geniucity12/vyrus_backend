@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import session from "express-session";
 import passport from "passport";
+import jwt from "jsonwebtoken";
+import prisma from "./db";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/user";
 
@@ -48,6 +50,22 @@ app.use(
 app.use(passport.initialize() as any);
 // @ts-ignore: Suppress type errors for passport middleware
 app.use(passport.session() as any);
+
+// JWT middleware — if no session user, try Bearer token (for cross-domain requests)
+app.use(async (req: any, _res: any, next: any) => {
+  if (!req.user) {
+    const authHeader = req.headers["authorization"];
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      try {
+        const decoded = jwt.verify(token, process.env.SESSION_SECRET || "secret") as any;
+        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        if (user) req.user = user;
+      } catch {}
+    }
+  }
+  next();
+});
 
 // Routes
 app.use("/auth", authRoutes);
